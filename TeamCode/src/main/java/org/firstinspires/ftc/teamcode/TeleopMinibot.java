@@ -148,7 +148,6 @@ public class TeleopMinibot extends LinearOpMode {
                     rearLeft,  robot.rearLeftMotorVel,  rearRight,  robot.rearRightMotorVel );
             telemetry.addData("Front", "%d %d counts", robot.frontLeftMotorPos, robot.frontRightMotorPos );
             telemetry.addData("Back ", "%d %d counts", robot.rearLeftMotorPos,  robot.rearRightMotorPos );
-            telemetry.addData("Claw Servo", "%.3f counts", robot.clawServo.getPosition() );
 //          telemetry.addData("Gyro Angle", "%.1f degrees", robot.headingIMU() );
             telemetry.addData("Driver Centric", "%.1f degrees", driverAngle );
             telemetry.addData("CycleTime", "%.1f msec (%.1f Hz)", elapsedTime, elapsedHz );

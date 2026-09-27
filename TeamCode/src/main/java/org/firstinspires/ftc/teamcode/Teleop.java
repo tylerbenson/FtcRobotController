@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.HardwareSwyftBot.SpindexerState.SPI
 import static org.firstinspires.ftc.teamcode.HardwareSwyftBot.SpindexerState.SPIN_P1;
 import static org.firstinspires.ftc.teamcode.HardwareSwyftBot.SpindexerState.SPIN_P3;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
@@ -205,7 +206,7 @@ public abstract class Teleop extends LinearOpMode {
             updateLimelightPinpointOffset();
 
             processCollector();
-            processTurretAutoAim();
+            processTurretAutoAimControls();
             processSpindexer();
             processShooter();
             processInjector();
@@ -696,12 +697,15 @@ public abstract class Teleop extends LinearOpMode {
         }
     } // processShooter
 
-    private void processTurretAutoAim() {
+    /*---------------------------------------------------------------------------------*/
+     void processTurretAutoAimControls() {
         // Do we want to use them? (so long as the button is held...)
         if( autoAimEnabled ) {
-            // update pinpoint coordinates if conditions are good to do so
-//          updatePinpointFieldPosition0();
-            // now that we have the latest coordinate update, compute the auto-aim parameters
+            // Ensure updatePinpointFieldPosition() already processed in performEveryLoopTeleop()!
+            // Use the latest coordinates to compute the auto-aim parameters
+    
+ /* Call robot.processTurretAutoAim( (blueAlliance)? Alliance.BLUE:Alliance.RED ) here once it's fixed */          
+ 
             odoShootDistance = robot.getShootDistance( (blueAlliance)? Alliance.BLUE : Alliance.RED );
             odoShootAngleDeg = robot.getShootAngleDeg( (blueAlliance)? Alliance.BLUE : Alliance.RED );
             // set the turret angle and shooter power
@@ -742,7 +746,7 @@ public abstract class Teleop extends LinearOpMode {
             robot.turretManualOffset -= 3.0; // degrees
             if( robot.turretManualOffset < -15.0 ) robot.turretManualOffset = -15.0;
         }
-    } // processTurretAutoAim
+    } // processTurretAutoAimControls
 
     /*---------------------------------------------------------------------------------*/
     void ensureShooterCollectorBothOn() {

@@ -73,25 +73,6 @@ public class HardwareMinibot
     // The math above assumes motor encoders.  For REV odometry pods, the counts per inch is different
     protected double COUNTS_PER_INCH2      = 1738.4;  // 8192 counts-per-rev / (1.5" omni wheel * PI)
 
-    //==============================================================================================
-    //Claw servo (demo)
-    public Servo clawServo = null;
-
-    final public static double CLAW_SERVO_CLOSED  = 0.443;  // Claw closed (hold sample/specimen)
-    final public static double CLAW_SERVO_INIT    = 0.500;  // Claw in init position (servo default power-on state)
-    final public static double CLAW_SERVO_OPEN_N  = 0.600;  // claw opened narrow (enough to release/drop)
-    final public static double CLAW_SERVO_OPEN_W  = 0.830;  // claw opened wide (fully open)
-
-    public enum clawStateEnum {
-        CLAW_INIT,
-        CLAW_OPEN_NARROW,
-        CLAW_OPEN_WIDE,
-        CLAW_OPEN,
-        CLAW_CLOSED
-    }
-    public clawStateEnum clawState = clawStateEnum.CLAW_INIT;
-    //==============================================================================================
-
     //Ultrasonic sensors
     private MaxSonarI2CXL sonarRangeF = null;
 
@@ -147,56 +128,12 @@ public class HardwareMinibot
         rearLeftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rearRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //==============================================================================================
-        // Claw Servo initialization
-        clawServo = hwMap.servo.get("ClawServo");             // servo port 0 (Expansion Hub)
-        clawServo.setPosition(CLAW_SERVO_INIT);
-        //==============================================================================================
-
         // Initialize REV Control Hub IMU
         initIMU();
 
 //      sonarRangeF = hwMap.get( MaxSonarI2CXL.class, "distance" );
 
     } /* init */
-
-    /*--------------------------------------------------------------------------------------------*/
-    public void clawStateSet( clawStateEnum newClawState )
-    {
-        switch( newClawState ) {
-            case CLAW_INIT :
-                clawServo.setPosition( CLAW_SERVO_INIT );
-                clawState = newClawState;
-                break;
-            case CLAW_OPEN :  // OPEN is used to toggle between OPEN_NARROW and OPEN_WIDE
-                if( clawState == HardwareMinibot.clawStateEnum.CLAW_OPEN_NARROW ) {
-                    clawServo.setPosition( CLAW_SERVO_OPEN_W );
-                    clawState = HardwareMinibot.clawStateEnum.CLAW_OPEN_WIDE;
-                } else if( clawState == HardwareMinibot.clawStateEnum.CLAW_OPEN_WIDE ) {
-                    clawServo.setPosition( CLAW_SERVO_OPEN_N );
-                    clawState = HardwareMinibot.clawStateEnum.CLAW_OPEN_NARROW;
-                } else { // Not currently OPEN in either NARROW or WIDE; start NARROW
-                    clawServo.setPosition( CLAW_SERVO_OPEN_N );
-                    clawState = HardwareMinibot.clawStateEnum.CLAW_OPEN_NARROW;
-                }
-                break;
-            case CLAW_OPEN_NARROW :
-                clawServo.setPosition( CLAW_SERVO_OPEN_N );
-                clawState = newClawState;
-                break;
-            case CLAW_OPEN_WIDE :
-                clawServo.setPosition( CLAW_SERVO_OPEN_W );
-                clawState = newClawState;
-                break;
-            case CLAW_CLOSED :
-                clawServo.setPosition( CLAW_SERVO_CLOSED );
-                clawState = newClawState;
-                break;
-            default:
-                break;
-        } // switch()
-
-    } // clawStateSet
 
     /*--------------------------------------------------------------------------------------------*/
     public void initIMU()

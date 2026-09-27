@@ -168,6 +168,13 @@ public class HardwareSwyftBot
     public    ElapsedTime shooterMotorsTimer = new ElapsedTime();
     public    double      shooterMotorsTime  = 0.0;   // how long it took to reach "ready" (msec)
 
+    // Time [sec] from the moment the shoot button is pressed until ball leaves the flywheel.
+    // (measured using high-frame-rate cellphone video)
+    private static final double TSHOOT_SECONDS = 0.25;  
+
+    // 3 iterations is more than enough for convergence (runs in microseconds)
+    private static final int VELOCITY_COMPENSATION_ITERATIONS = 3;
+
     //====== TURRET 5-turn SERVOS =====
     public Servo       turretServo     = null;  // 2 servos! (controlled together via Y cable)
     public AnalogInput turretServoPos1 = null;
@@ -1088,6 +1095,23 @@ public class HardwareSwyftBot
     } // rotate180XY
 
     /*--------------------------------------------------------------------------------------------*/
+    /**
+     * Empirical flight time of the ball in the air (seconds) versus distance to goal.
+     * Replace this placeholder with your own curve fit from stationary-shot testing.
+     * Example values:
+     *   - ~40 inches (close) → ~0.35 s
+     *   - ~80 inches (mid)   → ~0.45 s
+     *   - ~120 inches (far)  → ~0.55 s
+     */
+    private double getFlightTime(double distanceInches) {
+        // TODO: Replace with your own polynomial / lookup from video analysis.
+        // This linear approximation is a reasonable starting point.
+        return 0.25 + 0.0025 * distanceInches;   // tune coefficients as needed
+        // Alternative simple constant (if you prefer):
+        // return 0.45;
+    }
+
+    /*--------------------------------------------------------------------------------------------*/
     public double getShootDistance(Alliance alliance) {
         double currentX = robotGlobalXCoordinatePosition;
         double currentY = robotGlobalYCoordinatePosition;
@@ -1136,6 +1160,7 @@ public class HardwareSwyftBot
         return shootAngle;
     } // getShootAngleDeg
 
+    /*--------------------------------------------------------------------------------------------*/
     private double calculateShootTargetX(Alliance alliance) {
         boolean nearSide = (alliance == Alliance.BLUE) ?
                 robotGlobalYCoordinatePosition >= 0 : robotGlobalYCoordinatePosition <= 0;
@@ -1164,6 +1189,7 @@ public class HardwareSwyftBot
         }
     }// calculateShootTargetX
 
+    /*--------------------------------------------------------------------------------------------*/
     private double calculateShootTargetY(Alliance alliance) {
         boolean nearSide = (alliance == Alliance.BLUE) ?
                 robotGlobalYCoordinatePosition >= 0 : robotGlobalYCoordinatePosition <= 0;
@@ -1191,6 +1217,82 @@ public class HardwareSwyftBot
             return (alliance == Alliance.BLUE)? +60.0 : -58.0;
         }
     } // calculateShootTargetY
+
+    /*--------------------------------------------------------------------------------------------*/
+/*
+    void processTurretAutoAim() {
+
+        Alliance alliance = (blueAlliance) ? Alliance.BLUE : Alliance.RED;
+
+        // ----------------------------------------------------------------------------
+        // 1. Predict where the robot (and shooter) will be when the ball actually exits
+        // ----------------------------------------------------------------------------
+        double X_pred = robotGlobalXCoordinatePosition + robotGlobalXvelocity * TSHOOT_SECONDS;
+        double Y_pred = robotGlobalYCoordinatePosition + robotGlobalYvelocity * TSHOOT_SECONDS;
+        double Angle_pred = robotOrientationDegrees + robotAngleVelocity * TSHOOT_SECONDS;
+
+        // ----------------------------------------------------------------------------
+        // 2. Initial flight-time guess (using predicted position)
+        // ----------------------------------------------------------------------------
+        double initialDistance = getDistanceToTarget(X_pred, Y_pred, alliance);
+        double T_flight = getFlightTime(initialDistance);
+
+        // Launch-point velocity in global frame.
+        // (We use the robot-center velocity directly. If your shooter exit is offset
+        // from the odometry center, you can add the rotational term here:
+        //    double omegaRad = Math.toRadians(robotAngleVelocity);
+        //    double rX_global = ... (rotate your shooter offset by current heading)
+        //    Vx_lp += -omegaRad * rY_global;
+        //    Vy_lp += +omegaRad * rX_global;
+        // For most turret designs the effect is small, so we keep it simple.)
+        double Vx_lp = robotGlobalXvelocity;
+        double Vy_lp = robotGlobalYvelocity;
+
+        // ----------------------------------------------------------------------------
+        // 3. Iterate to find the virtual goal position (velocity compensation)
+        // ----------------------------------------------------------------------------
+        double virtualGx = 0.0;
+        double virtualGy = 0.0;
+        double D_virtual = initialDistance;
+
+        for (int i = 0; i < VELOCITY_COMPENSATION_ITERATIONS; i++) {
+            double targetX = (alliance == Alliance.BLUE) ? 60.0 : 60.0;
+            double targetY = (alliance == Alliance.BLUE) ? 60.0 : -60.0;
+
+            // Virtual goal = real goal - (launch velocity × flight time)
+            virtualGx = targetX - Vx_lp * T_flight;
+            virtualGy = targetY - Vy_lp * T_flight;
+
+            // New distance from predicted robot position to the virtual goal
+            double deltaX = virtualGx - X_pred;
+            double deltaY = virtualGy - Y_pred;
+            D_virtual = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            // Update flight-time estimate with the new virtual distance
+            T_flight = getFlightTime(D_virtual);
+        }
+
+        // ----------------------------------------------------------------------------
+        // 4. Use the EXACT same stationary polynomial on the virtual distance
+        //    (this is the magic - no new curve fit needed!)
+        // ----------------------------------------------------------------------------
+        double shooterPower = computeShooterPower(D_virtual);
+
+        // ----------------------------------------------------------------------------
+        // 5. Compute turret angle to the virtual goal from the predicted robot heading
+        // ----------------------------------------------------------------------------
+        double virtualDeltaX = virtualGx - X_pred;
+        double virtualDeltaY = virtualGy - Y_pred;
+        double targetFromStraight = Math.toDegrees(Math.atan2(virtualDeltaY, virtualDeltaX));
+        double odoShootAngleDeg = targetFromStraight - Angle_pred;
+
+        // ----------------------------------------------------------------------------
+        // 6. Command the hardware (exactly like before)
+        // ----------------------------------------------------------------------------
+        setTurretAngle(odoShootAngleDeg);
+        shooterMotorsSetPower(shooterPower);
+    } // processTurretAutoAim
+*/
 
     /*--------------------------------------------------------------------------------------------*/
     public double computeAxonPos( double measuredVoltage )
