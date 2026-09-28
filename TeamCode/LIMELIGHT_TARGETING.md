@@ -113,11 +113,10 @@ for firing authorization. A low-confidence scene should leave the gate closed.
 
 ```sh
 ./gradlew :TeamCode:assembleDebug
-python3 TeamCode/tests/run_targeting_tests.py
 ```
 
-The test runner requires Python 3 and JDK 17+ and downloads pinned FTC SDK test
-dependencies on the first run. No camera is needed for these synthetic tests.
-Tests cover all cells, partial visibility, inversion, conflicts, distinct-frame
-confirmation, time windows, disconnects, frozen data, restarts and arbitrary corner
-permutations. Hardware validation remains outstanding.
+Use the Control Hub live test above to validate actual camera behavior.
+`tests/LimelightCellTargetingTest.java` retains standalone synthetic test cases for
+all cells, partial visibility, inversion, conflicts, distinct-frame confirmation,
+time windows, disconnects, frozen data, restarts and arbitrary corner permutations.
+These are not run by the Android build. Hardware validation remains outstanding.
