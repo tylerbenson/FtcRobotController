@@ -46,8 +46,7 @@ captures/
 # For Mac users
 .DS_Store
 
-# Local Limelight capture sessions
-/recordings/
+# Python cache
 __pycache__/
 
 # Keystore files
